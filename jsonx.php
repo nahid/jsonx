@@ -36,13 +36,15 @@ This function helps to you to save or update data or value in specific node
 
 @param 		:	string $node // ':' colon separeted string
 @param 		: 	string/int $value
+@param 		: 	boolean $array
 
 @return 	: 	json otherwise false
 */
 
 
-	public function saveData($node, $value)
+	public function saveData($node, $value, $array=false)
 	{
+		$json='';
 		$node=explode(':', $node);
 
 		$data = &$this->data;
@@ -50,8 +52,20 @@ This function helps to you to save or update data or value in specific node
 	    foreach ($node as $key) {
 	        $data = &$data[$key];
 	    }
-	    $data[$finalKey] = $value;
-	    $json=json_encode($this->data);
+
+	    if(is_array($data[$finalKey])){
+	    	array_push($data[$finalKey], $value);
+	    }else{
+	    	if($array==true){
+		    	$data[$finalKey] = [$value];
+	    		
+	    	}else{
+		    	$data[$finalKey] = $value;
+	    	}
+		}
+
+
+		$json=json_encode($this->data);
 
 	    if(file_put_contents($this->file, $json)){
 	    	return $json;
