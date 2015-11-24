@@ -109,5 +109,33 @@ This method helps to you to find or get specific node value.
 	   
 	    return $data;
 	}
+
+	public function nodeDelete($node)
+	{
+		$json='';
+		$node=explode(':', $node);
+
+		$data = &$this->data;
+	    $finalKey = array_pop($node);
+	    foreach ($node as $key) {
+	        $data = &$data[$key];
+	    }
+
+	    if(isset($data[$finalKey])){
+	    	unset($data[$finalKey]);
+	    }else{
+	    	return false;
+	    }
+
+
+		$json=json_encode($this->data);
+
+	    if(file_put_contents($this->file, $json)){
+	    	return $json;
+	    }
+
+	    return false;
+
+	}
 }
 

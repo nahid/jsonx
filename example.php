@@ -9,5 +9,8 @@ $json=new JSONX('db/data.json');
  //$json->saveData('product:items', ["name"=>"plugin"]);
  $json->saveData('desc', 'nothings');
 
+//delete json node
+ $json->nodeDelete('contact');
+
 //read data
 //echo $json->getNodeValue('home:title');
