@@ -1,14 +1,17 @@
 <?php
 class JSONX
 {
-	protected $file;
-	protected $data=array();
+	protected $_file;
+	protected $_node='';
+	protected $_data=array();
+
+
 
 
 /*
-	this constructor set main json file path 
-	otherwise create it and read file contents 
-	and decode as an array and store it in $this->data
+	this constructor set main json file path
+	otherwise create it and read file contents
+	and decode as an array and store it in $this->_data
 */
 
 	function __construct($path)
@@ -22,11 +25,45 @@ class JSONX
 			fclose($path);
 		}
 
-		$this->file=$path;
+		$this->_file=$path;
 
-		$data=file_get_contents($this->file);
-		$this->data=json_decode($data, true);
+		$data=file_get_contents($this->_file);
+		$this->_data=json_decode($data, true);
 	}
+
+	public function node($node=null)
+	{
+		if(is_null($node)) return false;
+
+		$this->_node=$node;
+		return $this;
+	}
+
+	public function fetch()
+	{
+		$data = $this->_data;
+	    $path=explode(':', $this->_node);
+	    $node=$path;
+	    end($node);
+	    $finalKey = key($path);
+
+	    foreach($path as $val){
+
+	    	if(!isset($data[$val])){
+	    		break;
+	    		return false;
+
+	    	}
+	    		$data=$data[$val];
+
+
+	    }
+
+
+	    return $data;
+	}
+
+
 
 
 /*
@@ -42,12 +79,12 @@ This function helps to you to save or update data or value in specific node
 */
 
 
-	public function saveData($node, $value, $array=false)
+	public function save($value, $array=false)
 	{
 		$json='';
-		$node=explode(':', $node);
+		$node=explode(':', $this->_node);
 
-		$data = &$this->data;
+		$data = &$this->_data;
 	    $finalKey = array_pop($node);
 	    foreach ($node as $key) {
 	        $data = &$data[$key];
@@ -58,16 +95,16 @@ This function helps to you to save or update data or value in specific node
 	    }else{
 	    	if($array==true){
 		    	$data[$finalKey] = [$value];
-	    		
+
 	    	}else{
 		    	$data[$finalKey] = $value;
 	    	}
 		}
 
 
-		$json=json_encode($this->data);
+		$json=json_encode($this->_data);
 
-	    if(file_put_contents($this->file, $json)){
+	    if(file_put_contents($this->_file, $json)){
 	    	return $json;
 	    }
 
@@ -86,36 +123,12 @@ This method helps to you to find or get specific node value.
 @return 	: 	string/false
 */
 
-	public function getNodeValue($node)
-	{
-		$data = $this->data;
-	    $path=$node=explode(':', $node);
-	    $node=$path;
-	    end($node);
-	    $finalKey = key($path);
-
-	    foreach($path as $val){
-	    	
-	    	if(!isset($data[$val])){
-	    		break;
-	    		return false;
-
-	    	}
-	    		$data=$data[$val];
-	    		
-	    	
-	    }
-
-	   
-	    return $data;
-	}
-
-	public function nodeDelete($node)
+	public function delete()
 	{
 		$json='';
-		$node=explode(':', $node);
+		$node=explode(':', $this->_node);
 
-		$data = &$this->data;
+		$data = &$this->_data;
 	    $finalKey = array_pop($node);
 	    foreach ($node as $key) {
 	        $data = &$data[$key];
@@ -128,9 +141,9 @@ This method helps to you to find or get specific node value.
 	    }
 
 
-		$json=json_encode($this->data);
+		$json=json_encode($this->_data);
 
-	    if(file_put_contents($this->file, $json)){
+	    if(file_put_contents($this->_file, $json)){
 	    	return $json;
 	    }
 
@@ -138,4 +151,3 @@ This method helps to you to find or get specific node value.
 
 	}
 }
-
