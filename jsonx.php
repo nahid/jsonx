@@ -5,6 +5,17 @@ class JSONX
 	protected $_node='';
 	protected $_data=array();
 
+	protected $_key='';
+	protected $_value='';
+	protected $_condition=null;
+	protected $_conditions=[
+		'>'=>'greater',
+		'<'=>'less',
+		'='=>'equal',
+		'>='=>'greaterequal',
+		'<='=>'lessequal',
+		];
+
 
 
 
@@ -33,26 +44,34 @@ class JSONX
 
 	public function node($node=null)
 	{
-		if(is_null($node)) return false;
+		if(is_null($node) || $node=='') return false;
 
-		$this->_node=$node;
+		$this->_node=explode(':', $node);
 		return $this;
+	}
+
+	public function where($key=null, $condition=null, $value=null)
+	{
+		if(is_null($key) || is_null($condition) || is_null($value)) return false;
+		$this->_key=$key;
+		$this->_condition=$condition;
+		$this->_value=$value;
+
+		return $this;
+
 	}
 
 	public function fetch()
 	{
+		$terminate=false;
 		$data = $this->_data;
-	    $path=explode(':', $this->_node);
-	    $node=$path;
-	    end($node);
-	    $finalKey = key($path);
+	    $path=$this->_node;
 
 	    foreach($path as $val){
 
 	    	if(!isset($data[$val])){
-	    		break;
-	    		return false;
-
+					$terminate=true;
+					break;
 	    	}
 	    		$data=$data[$val];
 
@@ -60,7 +79,16 @@ class JSONX
 	    }
 
 
-	    return $data;
+	    if(!is_null($this->_condition) || $this->_condition!='')
+	    {
+	    	$func ='where'. ucfirst($this->_conditions[$this->_condition]);
+	    	return $this->$func($data, $this->_key, $this->_value);
+	    }
+
+
+
+			if($terminate) return false;
+			return $data;
 	}
 
 
@@ -82,7 +110,7 @@ This function helps to you to save or update data or value in specific node
 	public function save($value, $array=false)
 	{
 		$json='';
-		$node=explode(':', $this->_node);
+		$node=$this->_node;
 
 		$data = &$this->_data;
 	    $finalKey = array_pop($node);
@@ -126,7 +154,7 @@ This method helps to you to find or get specific node value.
 	public function delete()
 	{
 		$json='';
-		$node=explode(':', $this->_node);
+		$node=$this->_node;
 
 		$data = &$this->_data;
 	    $finalKey = array_pop($node);
@@ -149,5 +177,56 @@ This method helps to you to find or get specific node value.
 
 	    return false;
 
+	}
+
+
+
+	protected function whereGreater($data, $key, $value)
+	{
+			return array_filter($data, function($var) use($key, $value){
+				if(isset($var[$key]))
+				if($var[$key]>$value){
+					return $var;
+				}
+			});
+	}
+
+	protected function whereLess($data, $key, $value)
+	{
+			return array_filter($data, function($var) use($key, $value){
+				if(isset($var[$key]))
+				if($var[$key]==$value){
+					return $var;
+				}
+			});
+	}
+
+	protected function whereEqual($data, $key, $value)
+	{
+			return array_filter($data, function($var) use($key, $value){
+				if(isset($var[$key]))
+				if($var[$key]==$value){
+					return $var;
+				}
+			});
+	}
+
+	protected function whereGreaterequal($data, $key, $value)
+	{
+			return array_filter($data, function($var) use($key, $value){
+				if(isset($var[$key]))
+				if($var[$key]>=$value){
+					return $var;
+				}
+			});
+	}
+	protected function whereLessequal($data, $key, $value)
+	{
+			return array_filter($data, function($var) use($key, $value){
+				if(isset($var[$key]))
+				if($var[$key]<=$value){
+					return $var;
+				}
+			});
 	}
 }
