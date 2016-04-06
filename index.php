@@ -24,14 +24,19 @@ $items=[
 
 // var_dump($json->node('products')->where('name', '=', 'Keyboard')->fetch());
 
-// $shirts=$json->node('items')->where('id', '=', 5)->fetch();
+$shirts=$json->node('items')->where('cat', '=', 't-shirt')->orWhere('cat', '=', 'shirt')->fetch();
+
+echo '<pre>';
+print_r($shirts);
+
+
 
 // foreach($shirts as $shirt){
 // 	print_r($shirt);
 // }
 
 
-$shirts=$json->node('items')->where(array(array('cat', '=', 'pant'),array('name', '=', 'Gabardean-L'),array('id', '<', 4)))->fetch();
+//$shirts=$json->node('items')->where(array(array('cat', '=', 'pant'),array('name', '=', 'Gabardean-L'),array('id', '<', 4)))->fetch();
 
-echo '<pre>';
-print_r( $json );
+//echo '<pre>';
+//print_r( $json );

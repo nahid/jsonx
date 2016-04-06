@@ -4,15 +4,22 @@ class JSONX
 	protected $_file;
 	protected $_node='';
 	protected $_data=array();
+	
+	/**
+	 * Stores where conditions
+	 * @var array
+	 */
+	protected $_andConditions = [];
 
-	protected $_key='';
-	protected $_value='';
-	protected $_condition=null;
+	/**
+	 * Stores orWhere conditions
+	 * @var array
+	 */
+	protected $_orConditions = [];
 
-	protected $_isComposite = false;
-	protected $_compositeConditions = array();
+	protected $_calculatedData = null;
 
-	protected $_conditions=[
+	protected $_conditions = [
 		'>'=>'greater',
 		'<'=>'less',
 		'='=>'equal',
@@ -20,7 +27,6 @@ class JSONX
 		'>='=>'greaterequal',
 		'<='=>'lessequal',
 		];
-
 
 	/*
 		this constructor set main json file path
@@ -52,42 +58,7 @@ class JSONX
 		return $this;
 	}
 
-	public function where($key=null, $condition=null, $value=null)
-	{
-		if(is_array($key)) {
-			$this->_isComposite = true;
-			$this->whereComposite($key);
-		}
-
-		$this->whereComposite($key, $condition, $value);
-
-		return $this;
-	}
-
-	private function whereSimple($key=null, $condition=null, $value=null)
-	{
-		if(is_null($key) || is_null($condition) || is_null($value)) return false;
-		$this->_key=$key;
-		$this->_condition=$condition;
-		$this->_value=$value;
-	}
-
-	private function whereComposite(array $conditions)
-	{
-		foreach($conditions as $condition) {
-			if(!isset($condition[0],$condition[1],$condition[2])) continue;
-			
-			$map = array(
-				'key' => $condition[0],
-				'condition' => $condition[1],
-				'value' => $condition[2],
-				);
-
-			$this->_compositeConditions[] = $map;
-		}
-	}
-
-	public function fetch()
+	private function getData()
 	{
 		$terminate=false;
 		$data = $this->_data;
@@ -103,56 +74,70 @@ class JSONX
 	    	$data=$data[$val];
 	    }
 
-	    if($this->_isComposite) {
-	    	return $this->fetchComposite($data);
-	    } else {
-	    	return $this->fetchSimple($data);
-	    }
 
 		if($terminate) return false;
 		return $data;
 	}
-
-	private function fetchSimple($data)
+	
+	private function runFilter($data, $key, $condition, $value)
 	{
-		if(is_null($this->_condition) || $this->_condition =='')
-	    	return array();
-	    
-	    $func ='where'. ucfirst($this->_conditions[$this->_condition]);
-	    return $this->$func($data, $this->_key, $this->_value);
+	    $func ='where'. ucfirst($this->_conditions[$condition]);
+	    return $this->$func($data, $key, $value);
 	}
 
-	private function fetchComposite($data)
+	private function makeWhere($rule, $key=null, $condition=null, $value=null)
 	{
-		$filteredData = array();
-		foreach($this->_compositeConditions as $condition) {
-			$func ='where'. ucfirst($this->_conditions[$condition['condition']]);
-			$filteredData[] = $this->$func($data, $condition['key'], $condition['value']);
+		$data = $this->getData();
+		$calculatedData = $this->runFilter($data, $key, $condition, $value);
+		if(!is_null($this->_calculatedData)) {
+			if($rule=='and')
+				$calculatedData = array_intersect(array_keys($this->_calculatedData), array_keys($calculatedData));		
+			if($rule=='or')
+				$calculatedData = array_merge(array_keys($this->_calculatedData), array_keys($calculatedData));
+			$this->_calculatedData='';
+
+			foreach ($calculatedData as $value) {
+				$this->_calculatedData[$value]= $data[$value];
+			}
+			return true;
 		}
-		if(count($filteredData) > 1) {
-			return $this->intersection($filteredData, $data);
-		}
-		return $filteredData;
+		$this->_calculatedData = $calculatedData;
+		return true;
+	}
+	public function where($key=null, $condition=null, $value=null)
+	{
+		$this->makeWhere('and', $key, $condition, $value);
+		return $this;
 	}
 
-	private function intersection(array $filteredData, $nodeData) {
-		$first=array_keys($filteredData[0]);
-		$second=array_keys($filteredData[1]);
-		$next = [];
-		for($i=1; $i<=(count($filteredData)-1); $i++){
-			$next = array_intersect($first, $second);
-			$first=$next;
-			if(count($filteredData)>($i+1))
-				$second=array_keys($filteredData[$i+1]);
-		}
 
-		$data=[];
-		foreach($next as $key){
-			$data[]=$nodeData[$key];
-		}
-		return $data;
+	public function orWhere($key=null, $condition=null, $value=null)
+	{
+		$this->makeWhere('or', $key, $condition, $value);
+		return $this;
 	}
 
+	public function fetch()
+	{
+		if(is_null($this->_calculatedData)) {
+			$terminate=false;
+			$data = $this->_data;
+		    $path=$this->_node;
+
+		    foreach($path as $val){
+
+		    	if(!isset($data[$val])){
+					$terminate=true;
+					break;
+		    	}
+
+		    	$data=$data[$val];
+		    }
+		    return $data;
+		}
+
+		return $this->_calculatedData;
+	}
 	/*
 	saveData()
 
@@ -187,7 +172,7 @@ class JSONX
 		}
 
 
-		$json=json_encode($this->_data);
+		$json=json_encode($this->_data, JSONS_PRETTY_PRINT);
 
 	    if(file_put_contents($this->_file, $json)){
 	    	return $json;
