@@ -24,7 +24,7 @@ $items=[
 
 // var_dump($json->node('products')->where('name', '=', 'Keyboard')->fetch());
 
-$shirts=$json->node('items')->where('cat', '=', 't-shirt')->orWhere('cat', '=', 'shirt')->fetch();
+$shirts=$json->node('items')->where('id', '!=', 3)->where('id', '!=', 7)->fetch();
 
 echo '<pre>';
 print_r($shirts);

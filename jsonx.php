@@ -91,9 +91,11 @@ class JSONX
 		$calculatedData = $this->runFilter($data, $key, $condition, $value);
 		if(!is_null($this->_calculatedData)) {
 			if($rule=='and')
-				$calculatedData = array_intersect(array_keys($this->_calculatedData), array_keys($calculatedData));		
+				$calculatedData = array_intersect(array_keys($this->_calculatedData), array_keys($calculatedData));	
+
 			if($rule=='or')
 				$calculatedData = array_merge(array_keys($this->_calculatedData), array_keys($calculatedData));
+
 			$this->_calculatedData='';
 
 			foreach ($calculatedData as $value) {
@@ -104,6 +106,7 @@ class JSONX
 		$this->_calculatedData = $calculatedData;
 		return true;
 	}
+
 	public function where($key=null, $condition=null, $value=null)
 	{
 		$this->makeWhere('and', $key, $condition, $value);
@@ -133,6 +136,7 @@ class JSONX
 
 		    	$data=$data[$val];
 		    }
+
 		    return $data;
 		}
 
@@ -172,7 +176,7 @@ class JSONX
 		}
 
 
-		$json=json_encode($this->_data, JSONS_PRETTY_PRINT);
+		$json=json_encode($this->_data);
 
 	    if(file_put_contents($this->_file, $json)){
 	    	return $json;
@@ -267,6 +271,16 @@ This method helps to you to find or get specific node value.
 		return array_filter($data, function($var) use($key, $value){
 			if(isset($var[$key]))
 			if($var[$key]<=$value){
+				return $var;
+			}
+		});
+	}
+
+	protected function whereNotequal($data, $key, $value)
+	{
+		return array_filter($data, function($var) use($key, $value){
+			if(isset($var[$key]))
+			if($var[$key]!=$value){
 				return $var;
 			}
 		});
