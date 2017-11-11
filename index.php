@@ -18,14 +18,25 @@ $items=[
 	['id'=>9, 'cat'=>'pant', 'name'=>'Gabardean-L']
 ];
 
-if($json->node('items')->save($items)){
-	echo 'Saved';
-}
+// if($json->node('items')->save($items)){
+// 	echo 'Saved';
+// }
 
-//var_dump($json->node('products')->where('name', '=', 'Keyboard')->fetch());
+// var_dump($json->node('products')->where('name', '=', 'Keyboard')->fetch());
 
-$shirts=$json->node('items')->where('id', '=', 5)->fetch();
+$shirts=$json->node('items')->where('id', '!=', 3)->where('id', '!=', 7)->fetch();
 
-foreach($shirts as $shirt){
-	echo '<li>'.$shirt['name'].'</li>';
-}
+echo '<pre>';
+print_r($shirts);
+
+
+
+// foreach($shirts as $shirt){
+// 	print_r($shirt);
+// }
+
+
+//$shirts=$json->node('items')->where(array(array('cat', '=', 'pant'),array('name', '=', 'Gabardean-L'),array('id', '<', 4)))->fetch();
+
+//echo '<pre>';
+//print_r( $json );
